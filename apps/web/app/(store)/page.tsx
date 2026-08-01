@@ -7,6 +7,7 @@ import { HeroImage } from "@/components/store/HeroImage";
 import { AutoPlayVideo } from "@/components/store/AutoPlayVideo";
 import { getStoreSettings } from "@/actions/storeSettingsActions";
 import { DEFAULT_HERO, DEFAULT_VIDEO, DEFAULT_FOOTER_CTA, DEFAULT_COLLECTION, DEFAULT_USPS } from "@/types";
+import { Reveal } from "@/components/store/Reveal";
 
 const USP_ICONS = [Feather, Leaf, Zap, Star];
 
@@ -152,7 +153,7 @@ export default async function HomePage() {
             {usp.map((item, i) => {
               const Icon = USP_ICONS[i] ?? Star;
               return (
-                <div key={i} className="flex flex-col items-center gap-3 text-center">
+                <Reveal key={i} delay={i * 80} className="flex flex-col items-center gap-3 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-bg)] ring-1 ring-[var(--color-border)]">
                     <Icon className="h-5 w-5 text-[var(--color-accent)]" />
                   </div>
@@ -160,7 +161,7 @@ export default async function HomePage() {
                     <p className="font-semibold text-[var(--color-text)]">{item.label}</p>
                     <p className="mt-0.5 text-xs text-[var(--color-muted)]">{item.desc}</p>
                   </div>
-                </div>
+                </Reveal>
               );
             })}
           </div>
@@ -171,7 +172,7 @@ export default async function HomePage() {
       {videoUrl && (
         <section id="video" className="py-24 bg-[var(--color-bg)]">
           <div className="mx-auto max-w-6xl px-6">
-            <div className="mb-10 text-center">
+            <Reveal className="mb-10 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--color-accent)]">
                 {video.label}
               </p>
@@ -179,11 +180,11 @@ export default async function HomePage() {
                 {video.title}
               </h2>
               <p className="mt-3 text-sm text-[var(--color-muted)]">{video.desc}</p>
-            </div>
+            </Reveal>
 
-            <div className="relative aspect-video w-full overflow-hidden rounded-3xl border border-[var(--color-border)] bg-white shadow-lg">
+            <Reveal delay={120} className="relative aspect-video w-full overflow-hidden rounded-3xl border border-[var(--color-border)] bg-white shadow-lg">
               <AutoPlayVideo src={videoUrl} />
-            </div>
+            </Reveal>
           </div>
         </section>
       )}
@@ -191,7 +192,7 @@ export default async function HomePage() {
       {/* ── PRODUCTS ─────────────────────────────────────────────────── */}
       <section className="border-t border-[var(--color-border)] py-20 bg-white">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+          <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--color-accent)]">
                 {collection.label}
@@ -205,8 +206,10 @@ export default async function HomePage() {
             >
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </div>
-          <ProductGrid products={products} />
+          </Reveal>
+          <Reveal delay={120}>
+            <ProductGrid products={products} />
+          </Reveal>
         </div>
       </section>
 
@@ -216,7 +219,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: "radial-gradient(circle at 50% 50%, var(--color-green-light) 0%, transparent 70%)" }}
         />
-        <div className="relative mx-auto max-w-xl px-6 text-center">
+        <Reveal className="relative mx-auto max-w-xl px-6 text-center">
           <h2 className="text-3xl font-black text-white md:text-5xl">{footerCta.title}</h2>
           <p className="mt-4 text-white/60">{footerCta.desc}</p>
           <Link
@@ -225,7 +228,7 @@ export default async function HomePage() {
           >
             {footerCta.btn} <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
+        </Reveal>
       </section>
     </main>
   );
