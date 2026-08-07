@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { AlertTriangle, ExternalLink, Image as ImageIcon, Sparkles } from "lucide-react";
 import { saveSeoSettings } from "@/actions/storeSettingsActions";
 import type { SerializedStoreSettings, SeoSettingsInput } from "@/types";
 import { Field, SaveButton, inp } from "./HeroTextEditor";
@@ -11,6 +11,26 @@ import Uploader from "./Uploader";
 
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 160;
+
+// Same safe-default copy used server-side in app/lib/seo.ts when these fields are left
+// empty — duplicated here (not imported) because that module pulls in next/headers,
+// which can't be used from a Client Component.
+const FALLBACK_STORE_NAME = "Flex Comfort Shoes";
+const FALLBACK_SEO_DESCRIPTION =
+  "Découvrez notre collection de chaussures confortables, claquettes et produits orthopédiques avec livraison rapide partout en Tunisie.";
+const FALLBACK_KEYWORDS = ["chaussures confortables", "claquettes", "semelles orthopédiques", "Tunisie"];
+
+function dedupeKeywords(items: string[]): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of items) {
+    const t = raw.trim();
+    if (!t || seen.has(t.toLowerCase())) continue;
+    seen.add(t.toLowerCase());
+    out.push(t);
+  }
+  return out.join(", ");
+}
 
 function CharCounter({ length, max }: { length: number; max: number }) {
   const over = length > max;
@@ -28,6 +48,7 @@ function Section({
   pending,
   saved,
   onSave,
+  onAutoFill,
 }: {
   title: string;
   desc: string;
@@ -35,11 +56,28 @@ function Section({
   pending: boolean;
   saved: boolean;
   onSave: () => void;
+  /** Fills this section's fields from real store info (org name, canonical domain, other SEO fields). */
+  onAutoFill?: () => void;
 }) {
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-      <h2 className="text-base font-bold text-[var(--color-text)]">{title}</h2>
-      <p className="mb-5 mt-0.5 text-sm text-[var(--color-muted)]">{desc}</p>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-[var(--color-text)]">{title}</h2>
+          <p className="mt-0.5 text-sm text-[var(--color-muted)]">{desc}</p>
+        </div>
+        {onAutoFill && (
+          <button
+            type="button"
+            onClick={onAutoFill}
+            title="Fill this section from your store's info"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] transition hover:bg-[var(--color-accent)]/20"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Fill automatically
+          </button>
+        )}
+      </div>
       {children}
       <div className="mt-6 flex justify-end border-t border-[var(--color-border)] pt-5">
         <SaveButton pending={pending} saved={saved} onClick={onSave} />
@@ -81,7 +119,13 @@ function SocialCardPreview({
   );
 }
 
-export function SeoSettingsClient({ initial }: { initial: SerializedStoreSettings }) {
+export function SeoSettingsClient({
+  initial,
+  siteUrl,
+}: {
+  initial: SerializedStoreSettings;
+  siteUrl: string;
+}) {
   const [form, setForm] = useState<SeoSettingsInput>({
     orgName: initial.orgName ?? "",
     seoTitle: initial.seoTitle ?? "",
@@ -118,6 +162,39 @@ export function SeoSettingsClient({ initial }: { initial: SerializedStoreSetting
     });
   }
 
+  function handleBasicsAutoFill() {
+    const name = form.orgName.trim() || FALLBACK_STORE_NAME;
+    setForm((f) => ({
+      ...f,
+      seoTitle: `${name} — Chaussures confortables, claquettes & semelles orthopédiques en Tunisie`,
+      seoDescription: FALLBACK_SEO_DESCRIPTION,
+      seoKeywords: dedupeKeywords([name, ...FALLBACK_KEYWORDS]),
+    }));
+    setSaved(false);
+  }
+
+  function handleCanonicalAutoFill() {
+    set("seoCanonicalUrl", siteUrl);
+  }
+
+  function handleOgAutoFill() {
+    setForm((f) => ({ ...f, seoOgTitle: f.seoTitle, seoOgDescription: f.seoDescription }));
+    setSaved(false);
+  }
+
+  function handleTwitterAutoFill() {
+    setForm((f) => ({
+      ...f,
+      seoTwitterTitle: f.seoOgTitle.trim() || f.seoTitle,
+      seoTwitterDescription: f.seoOgDescription.trim() || f.seoDescription,
+    }));
+    setSaved(false);
+  }
+
+  function handleOrgAutoFill() {
+    set("orgName", FALLBACK_STORE_NAME);
+  }
+
   const ogPreviewTitle = form.seoOgTitle.trim() || form.seoTitle.trim();
   const ogPreviewDesc = form.seoOgDescription.trim() || form.seoDescription.trim();
   const twitterPreviewTitle = form.seoTwitterTitle.trim() || form.seoTitle.trim();
@@ -136,6 +213,7 @@ export function SeoSettingsClient({ initial }: { initial: SerializedStoreSetting
         pending={pending}
         saved={saved}
         onSave={handleSave}
+        onAutoFill={handleBasicsAutoFill}
       >
         <div className="space-y-4">
           <Field label="SEO Title">
@@ -192,6 +270,7 @@ export function SeoSettingsClient({ initial }: { initial: SerializedStoreSetting
         pending={pending}
         saved={saved}
         onSave={handleSave}
+        onAutoFill={handleCanonicalAutoFill}
       >
         <Field label="Canonical URL override (optional)">
           <input
@@ -211,6 +290,7 @@ export function SeoSettingsClient({ initial }: { initial: SerializedStoreSetting
           pending={pending}
           saved={saved}
           onSave={handleSave}
+          onAutoFill={handleOgAutoFill}
         >
           <div className="space-y-4">
             <Field label="OG Title">
@@ -267,6 +347,7 @@ export function SeoSettingsClient({ initial }: { initial: SerializedStoreSetting
           pending={pending}
           saved={saved}
           onSave={handleSave}
+          onAutoFill={handleTwitterAutoFill}
         >
           <div className="space-y-4">
             <Field label="Twitter Title">
@@ -321,6 +402,7 @@ export function SeoSettingsClient({ initial }: { initial: SerializedStoreSetting
         pending={pending}
         saved={saved}
         onSave={handleSave}
+        onAutoFill={handleOrgAutoFill}
       >
         <div className="space-y-4">
           <Field label="Organization / Store Name">

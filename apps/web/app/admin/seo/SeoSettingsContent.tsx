@@ -1,4 +1,5 @@
 import { getStoreSettings } from "@/actions/storeSettingsActions";
+import { getStaticSiteUrl } from "@/lib/seo";
 import { SeoSettingsClient } from "@/components/admin/SeoSettingsClient";
 
 export async function SeoSettingsContent() {
@@ -11,5 +12,5 @@ export async function SeoSettingsContent() {
     );
   }
 
-  return <SeoSettingsClient initial={result.data} />;
+  return <SeoSettingsClient initial={result.data} siteUrl={getStaticSiteUrl()} />;
 }
