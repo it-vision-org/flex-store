@@ -13,6 +13,7 @@ import {
   DEFAULT_OG_IMAGE_PATH,
 } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { MetaPixel } from "@/components/tracking/MetaPixel";
 import { CartProvider } from "@/cart-context";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
@@ -83,6 +84,7 @@ export default async function RootLayout({
           } as React.CSSProperties
         }
       >
+        <MetaPixel enabled={settings?.metaEnabled ?? false} pixelId={settings?.metaPixelId ?? null} />
         <JsonLd data={organizationJsonLd(identity, baseUrl)} />
         <JsonLd
           data={websiteJsonLd({
