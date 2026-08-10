@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { trackSearch } from "@/lib/tracking";
 
 export function ShopSearchInput({ defaultValue }: { defaultValue?: string }) {
   const router = useRouter();
@@ -16,8 +17,12 @@ export function ShopSearchInput({ defaultValue }: { defaultValue?: string }) {
       if (value === current) return;
 
       const params = new URLSearchParams(searchParams.toString());
-      if (value.trim()) params.set("search", value);
-      else params.delete("search");
+      if (value.trim()) {
+        params.set("search", value);
+        trackSearch({ searchQuery: value.trim() });
+      } else {
+        params.delete("search");
+      }
 
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
