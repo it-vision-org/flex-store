@@ -298,6 +298,17 @@ model StoreSettings {
   seoTwitterImage       String?
   seoIndexingEnabled    Boolean @default(true)
 
+  // ── Marketing & Tracking — Meta (Facebook/Instagram) Ads ────────────────
+  metaEnabled          Boolean   @default(false)
+  metaPixelId          String?
+  metaCapiEnabled      Boolean   @default(false)
+  metaCapiAccessToken  String?   @db.Text // AES-256-GCM ciphertext, never plaintext at rest
+  metaAdvancedMatching Boolean   @default(false)
+  metaTestEventCode    String?
+  metaLastTestAt       DateTime?
+  metaLastTestStatus   String? // "success" | "error"
+  metaLastTestMessage  String?
+
   updatedAt DateTime @updatedAt
 
   usps StoreUsp[]
