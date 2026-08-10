@@ -1,9 +1,13 @@
 "use server";
 
 import { randomBytes } from "crypto";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db, OrderStatus as PrismaOrderStatus } from "@shoestore/db";
 import { getCurrentUser } from "@/lib/session";
+import { getShopBaseUrl } from "@/lib/seo";
+import { getMetaServerConfig, sendMetaCapiEvent, buildUserData } from "@/lib/tracking/meta/server";
+import { purchaseCustomData } from "@/lib/tracking/meta/events";
 import type {
   ActionResult,
   CreateOrderInput,
@@ -201,6 +205,56 @@ export async function createOrder(
 
       return newOrder;
     });
+
+    // Authoritative Meta Conversions API Purchase — the order above is now real and paid-for
+    // (this store is Cash-on-Delivery-only, so order creation IS the confirmation point).
+    // Bounded-awaited (sendMetaCapiEvent times out internally at ~3s) rather than true
+    // fire-and-forget, since a detached promise can be dropped once a serverless function's
+    // response is sent — this trades a small worst-case latency for reliable delivery.
+    // Never throws; a Meta outage must never fail order creation.
+    try {
+      const config = await getMetaServerConfig();
+      if (config?.capiEnabled && config.accessToken) {
+        const headersList = await headers();
+        const userAgent = headersList.get("user-agent") ?? undefined;
+        const clientIp = headersList.get("x-forwarded-for")?.split(",")[0]?.trim();
+        const baseUrl = await getShopBaseUrl();
+
+        const contentIds = input.items.map((i) => i.variantId);
+        const contents = input.items.map((item) => {
+          const v = variantMap.get(item.variantId)!;
+          const unitPrice = v.priceOverride != null ? Number(v.priceOverride) : Number(v.color.product.basePrice);
+          return { id: item.variantId, quantity: item.quantity, itemPrice: unitPrice };
+        });
+
+        const [firstName, ...rest] = order.customerName.trim().split(/\s+/);
+        const userData = buildUserData({
+          ...(config.advancedMatching
+            ? {
+                email: order.customerEmail,
+                phone: order.customerPhone,
+                firstName,
+                lastName: rest.join(" ") || null,
+                city: order.city,
+                externalId: currentUser?.id ?? null,
+              }
+            : {}),
+          clientIp,
+          userAgent,
+        });
+
+        await sendMetaCapiEvent({
+          config,
+          eventName: "Purchase",
+          eventId: `purchase_${order.id}`,
+          eventSourceUrl: `${baseUrl}/checkout/success?ref=${order.orderNumber}`,
+          userData,
+          customData: purchaseCustomData({ orderId: order.id, contentIds, contents, value: total }),
+        });
+      }
+    } catch (error) {
+      console.error("[ORDER] Meta CAPI purchase error:", error);
+    }
 
     revalidatePath("/admin/orders");
     revalidatePath("/shop");
