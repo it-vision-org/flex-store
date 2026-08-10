@@ -346,6 +346,11 @@ export type SerializedStoreSettings = {
   seoTwitterDescription: string | null;
   seoTwitterImage: string | null;
   seoIndexingEnabled: boolean;
+
+  // Public-safe Meta tracking config — the CAPI access token is NEVER included here.
+  metaEnabled: boolean;
+  metaPixelId: string | null;
+  metaAdvancedMatching: boolean;
 };
 
 export type SeoSettingsInput = {
@@ -368,4 +373,29 @@ export type ContactInfo = {
   phone: string;
   location: string;
   responseTime: string;
+};
+
+// ── Marketing & Tracking — Meta (Facebook/Instagram) Ads ──────────────────
+// Admin-only view of Meta settings. Never includes the raw CAPI access token —
+// only whether one is configured — so this type is safe to pass into a Client Component.
+export type MetaAdminSettings = {
+  metaEnabled: boolean;
+  metaPixelId: string | null;
+  metaCapiEnabled: boolean;
+  metaTokenConfigured: boolean;
+  metaAdvancedMatching: boolean;
+  metaTestEventCode: string | null;
+  metaLastTestAt: string | null;
+  metaLastTestStatus: "success" | "error" | null;
+  metaLastTestMessage: string | null;
+};
+
+export type MetaSettingsInput = {
+  metaEnabled: boolean;
+  metaPixelId: string;
+  metaCapiEnabled: boolean;
+  metaAdvancedMatching: boolean;
+  metaTestEventCode: string;
+  /** Only present when the admin is replacing the token — omit/empty to keep the existing one. */
+  metaAccessToken?: string;
 };
