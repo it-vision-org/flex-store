@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCart } from "@/cart-context";
+import { trackAddToCart } from "@/lib/tracking";
 import type { SerializedProductColor } from "@/types";
 
 interface ProductActionsProps {
@@ -65,6 +66,12 @@ export function ProductActions({
       size: selectedSize,
       quantity: qty,
       maxStock: availableStock ?? undefined,
+    });
+    trackAddToCart({
+      contentIds: [selectedVariant.id],
+      contents: [{ id: selectedVariant.id, quantity: qty, itemPrice: unitPrice }],
+      contentName: productName,
+      value: unitPrice * qty,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
