@@ -7,6 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { getProductBySlug } from "@/actions/productActions";
 import { ProductDetail } from "@/components/store/ProductDetail";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ViewContentTracker } from "@/components/tracking/ViewContentTracker";
 import {
   getBaseUrl,
   getApexBaseUrl,
@@ -102,6 +103,12 @@ export default async function ProductPage({
     <main className="mx-auto max-w-6xl px-6 py-10">
       <JsonLd data={productJsonLd({ product, url, storeName: identity.storeName })} />
       <JsonLd data={breadcrumbJsonLd(breadcrumbItems)} />
+      <ViewContentTracker
+        productId={product.id}
+        productName={product.name}
+        categoryName={product.category?.name}
+        price={product.basePrice}
+      />
 
       <Link
         href="/"
