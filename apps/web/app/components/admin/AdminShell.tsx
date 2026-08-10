@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ShoppingBag, Plus, Store, ClipboardList, MessageSquare, Users, Menu, X, Tag, Search } from "lucide-react";
+import { ShoppingBag, Plus, Store, ClipboardList, MessageSquare, Users, Menu, X, Tag, Search, Megaphone } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 import { LogoImage } from "@/components/store/LogoImage";
 import { markAllContactsRead } from "@/actions/contactActions";
@@ -83,6 +83,12 @@ export function AdminShell({
       active: pathname === "/admin/seo",
       icon: Search,
       label: "SEO",
+    },
+    {
+      href: "/admin/marketing/meta",
+      active: pathname.startsWith("/admin/marketing"),
+      icon: Megaphone,
+      label: "Marketing",
     },
     {
       href: "/admin/team",
