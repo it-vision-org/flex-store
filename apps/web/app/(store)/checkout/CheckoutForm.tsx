@@ -6,6 +6,7 @@ import { Loader2, Sparkles, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCart } from "@/cart-context";
 import { formatPrice } from "@/lib/utils";
+import { trackInitiateCheckout, trackPurchase } from "@/lib/tracking";
 import { createOrder } from "@/actions/orderActions";
 import { getDeliveryFee } from "@/actions/storeSettingsActions";
 import type { PastAddress } from "@/actions/customerAuthActions";
@@ -41,6 +42,7 @@ export function CheckoutForm({ prefill }: { prefill: Prefill }) {
   const [submitting, setSubmitting] = useState(false);
   const [modal, setModal] = useState<{ orderNumber: string; orderId: string } | null>(null);
   const orderPlacedRef = useRef(false);
+  const initiateCheckoutFiredRef = useRef(false);
 
   const pastAddresses = prefill?.pastAddresses ?? [];
   const [selectedAddressKey, setSelectedAddressKey] = useState(
@@ -70,6 +72,18 @@ export function CheckoutForm({ prefill }: { prefill: Prefill }) {
       router.replace("/cart");
     }
   }, [isHydrated, items.length, modal, router]);
+
+  useEffect(() => {
+    if (!isHydrated || items.length === 0 || initiateCheckoutFiredRef.current) return;
+    initiateCheckoutFiredRef.current = true;
+    trackInitiateCheckout({
+      contentIds: items.map((i) => i.variantId),
+      contents: items.map((i) => ({ id: i.variantId, quantity: i.quantity, itemPrice: i.unitPrice })),
+      numItems: items.reduce((sum, i) => sum + i.quantity, 0),
+      value: total,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHydrated, items.length]);
 
   if (!isHydrated) return null;
   if (items.length === 0 && !modal) return null;
@@ -107,8 +121,14 @@ export function CheckoutForm({ prefill }: { prefill: Prefill }) {
           return;
         }
         orderPlacedRef.current = true;
-        clearCart();
         const { orderNumber, orderId } = result.data!;
+        trackPurchase({
+          orderId,
+          contentIds: items.map((i) => i.variantId),
+          contents: items.map((i) => ({ id: i.variantId, quantity: i.quantity, itemPrice: i.unitPrice })),
+          value: total + deliveryFee,
+        });
+        clearCart();
         if (prefill) {
           router.push(`/checkout/success?ref=${orderNumber}`);
         } else {
