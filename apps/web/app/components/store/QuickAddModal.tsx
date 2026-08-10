@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useCart } from "@/cart-context";
 import { formatPrice } from "@/lib/utils";
+import { trackAddToCart } from "@/lib/tracking";
 import type { SerializedProduct, SerializedProductColor } from "@/types";
 
 export function QuickAddModal({
@@ -50,6 +51,12 @@ export function QuickAddModal({
       size: selectedSize,
       quantity: qty,
       maxStock: availableStock ?? undefined,
+    });
+    trackAddToCart({
+      contentIds: [selectedVariant.id],
+      contents: [{ id: selectedVariant.id, quantity: qty, itemPrice: displayPrice }],
+      contentName: product.name,
+      value: displayPrice * qty,
     });
     onClose();
   }
