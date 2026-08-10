@@ -9,7 +9,8 @@
     "UPLOADTHING_REGIONS",
     "JWT_SECRET",
     "CONTACT_RECIPIENT",
-    "NEXT_PUBLIC_APP_URL"
+    "NEXT_PUBLIC_APP_URL",
+    "META_TOKEN_ENCRYPTION_KEY"
   ],
   "tasks": {
     "build": {
