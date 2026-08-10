@@ -66,6 +66,9 @@ function serialize(s: any, usps: any[]): SerializedStoreSettings {
     seoTwitterDescription: s.seoTwitterDescription,
     seoTwitterImage: s.seoTwitterImage,
     seoIndexingEnabled: s.seoIndexingEnabled,
+    metaEnabled: s.metaEnabled,
+    metaPixelId: s.metaPixelId,
+    metaAdvancedMatching: s.metaAdvancedMatching,
   };
 }
 
